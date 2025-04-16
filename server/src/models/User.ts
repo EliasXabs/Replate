@@ -11,8 +11,16 @@ import {
   import { Admin } from './Admin';
   import { Business } from './Business';
   
+  // Define an interface for the attributes required when creating a new user.
+  export interface IUserCreationAttributes {
+    name: string;
+    email: string;
+    password_hash: string;
+    role: string;
+  }
+  
   @Table({ tableName: 'users', timestamps: false })
-  export class User extends Model<User> {
+  export class User extends Model<User, IUserCreationAttributes> {
     @Column({
       type: DataType.STRING(100),
       allowNull: false,
@@ -42,11 +50,9 @@ import {
     @Column({ field: 'created_at' })
     createdAt!: Date;
   
-    // A user may have one admin record if they are an admin
     @HasOne(() => Admin)
     admin?: Admin;
   
-    // A user may own multiple businesses
     @HasMany(() => Business)
     businesses?: Business[];
   }

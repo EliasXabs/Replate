@@ -12,6 +12,7 @@ const sequelize = new Sequelize({
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT),
   models: [path.join(__dirname, '../models/*.ts')],
+  logging: false,
 });
 
 export default sequelize;
