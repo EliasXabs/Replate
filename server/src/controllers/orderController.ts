@@ -4,6 +4,7 @@ import { Order } from '../models/Order';
 import { OrderItem } from '../models/OrderItem';
 import { OrderStatus } from '../models/OrderStatus';
 import { Business } from '../models/Business';
+import { CustomerPoints } from '../models/CustomerPoints';
 
 export const createOrder = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -143,6 +144,23 @@ export const updateOrderStatus = async (req: Request, res: Response): Promise<vo
     const { statusId } = req.body;
     order.status_id = statusId;
     await order.save();
+
+    if (statusId === 3) {
+        const customerId = order.user_id;
+        const pointsToAdd = Math.floor(Number(order.total_price)); // 1 point per $1
+        let customerPoints = await CustomerPoints.findOne({ where: { user_id: customerId } });
+      
+        if (customerPoints) {
+          customerPoints.points += pointsToAdd;
+          customerPoints.lastUpdated = new Date();
+          await customerPoints.save();
+        } else {
+          await CustomerPoints.create({
+            user_id: customerId,
+            points: pointsToAdd,
+          } as any);
+        }
+    }
 
     res.json(order);
   } catch (err) {

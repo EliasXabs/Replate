@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes';
 import restaurantRoutes from './routes/restaurantRoutes'; // Assuming you have restaurantRoutes defined
 import menuRoutes from './routes/menuRoutes'; // Assuming you have menuRoutes defined
 import orderRoutes from './routes/orderRoutes'; // Assuming you have orderRoutes defined
+import pointRoutes from './routes/pointRoutes'; // Assuming you have pointRoutes defined
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/menu', menuRoutes); // Assuming you have menu routes defined
 app.use('/api/order', orderRoutes); // Assuming you have order routes defined
+app.use('/api/points', pointRoutes); // Assuming you have points routes defined
 
 // Initialize Sequelize and then start the server
 sequelize
