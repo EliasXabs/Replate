@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import sequelize from './db'; // Adjust based on your project structure
 import authRoutes from './routes/authRoutes';
 import restaurantRoutes from './routes/restaurantRoutes'; // Assuming you have restaurantRoutes defined
+import menuRoutes from './routes/menuRoutes'; // Assuming you have menuRoutes defined
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.get('/', (_req, res) => {
 // Mount the auth routes under the /api/auth path
 app.use('/api/auth', authRoutes);
 app.use('/api/restaurants', restaurantRoutes);
+app.use('/api/menu', menuRoutes); // Assuming you have menu routes defined
 
 // Initialize Sequelize and then start the server
 sequelize
