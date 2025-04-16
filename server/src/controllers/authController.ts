@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { User } from '../models/User';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { generateJWT } from '../services/authServices';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
@@ -20,12 +20,17 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Create a new user record
     const user = await User.create({ name, email, password_hash, role });
     
-    res.status(201).json({ message: 'User registered successfully', user });
+    // Convert the Sequelize instance to a plain object and remove password_hash
+    const userWithoutPassword = user.toJSON();
+    delete (userWithoutPassword as { password_hash?: string }).password_hash;
+    
+    res.status(201).json({ message: 'User registered successfully', user: userWithoutPassword });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ error: 'Server error during registration' });
   }
 };
+
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -57,14 +62,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 export const getUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Access the user id from the request (cast as any if needed)
     const userId = (req as any).user?.id;
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
     
-    // Retrieve the user, excluding the password_hash field
     const user = await User.findByPk(userId, { attributes: { exclude: ['password_hash'] } });
     if (!user) {
       res.status(404).json({ error: 'User not found' });

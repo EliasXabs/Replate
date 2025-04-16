@@ -13,9 +13,9 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction): void =
   const token = authHeader.split(' ')[1];
   
   try {
-    const decoded = jwt.verify(token, jwtConfig.secret) as { id: number; role: string };
-    // Attach user info to the request (cast as any if you haven't extended the type)
-    (req as any).user = decoded;
+    const decoded = jwt.verify(token, jwtConfig.secret) as { sub: string; role: string };
+    // Map sub to id for easier access in later middleware/controllers.
+    (req as any).user = { id: decoded.sub, role: decoded.role };
     next();
   } catch (error) {
     console.error('JWT error:', error);
