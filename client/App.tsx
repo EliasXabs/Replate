@@ -6,7 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaView, Text } from 'react-native';
 
-import { CartProvider } from './context/CartContext';     // ➊ NEW – wrap the app
+import { CartProvider } from './context/CartContext';
 
 /* ── real screens ─────────────────────────────────────────────────────── */
 import LoginScreen          from './screens/LoginScreen';
@@ -59,14 +59,7 @@ export default function App() {
       {/* ➋ Wrap ALL navigation with the cart provider */}
       <CartProvider>
         <NavigationContainer>
-          <Stack.Navigator
-            initialRouteName="Home"
-            screenOptions={{
-              headerStyle:      { backgroundColor: '#fdf8ef' },
-              headerTitleAlign: 'center',
-              headerTintColor:  '#000',
-            }}
-          >
+          <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false}}>
             {/* auth & landing */}
             <Stack.Screen name="Login"  component={LoginScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
