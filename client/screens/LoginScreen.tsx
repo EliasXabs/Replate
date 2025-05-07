@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { View, TextInput, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type AuthStackParamList = {
   Login: undefined;
@@ -24,6 +25,7 @@ export default function LoginScreen({ navigation }: { navigation: NavigationProp
       });
       const data = await res.json();
       if (res.ok) {
+        await AsyncStorage.setItem('authToken', data.token);
         navigation.navigate('Home');
       } else {
         alert(data.message || 'Invalid credentials');
