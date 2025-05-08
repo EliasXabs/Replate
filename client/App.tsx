@@ -22,6 +22,9 @@ import OrderStatusScreen    from './screens/OrderStatusScreen';
 import TrackOrdersScreen    from './screens/TrackOrdersScreen';
 import NewOnReplateScreen from './screens/NewOnReplateScreen';
 import RewardsScreen from './screens/RewardsScreen';
+import AccountScreen from './screens/AccountScreen';
+import AdminHomeScreen from './screens/AdminHomeScreen';
+import BusinessHomeScreen from './screens/BusinessHomeScreen';
 
 /* ── stack param list ─────────────────────────────────────────────────── */
 export type RootStackParamList = {
@@ -40,6 +43,9 @@ export type RootStackParamList = {
   Notifications: undefined;
   OrderConfirmation: undefined;
   Rewards: undefined;
+  AccountScreen: undefined;
+  AdminHome: undefined;
+  BusinessHome: undefined;
 
   /* pages with params */
   ComboDetails:          { id: string };
@@ -55,11 +61,6 @@ export type RootStackParamList = {
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-/* ---- tiny placeholders until you build real UIs ---------------------- */
-const Placeholder = (label: string) => () =>
-  <SafeAreaView><Text style={{ padding: 20 }}>{label}</Text></SafeAreaView>;
-
-const AccountScreen      = Placeholder('Account screen');
 
 /* ── app component ────────────────────────────────────────────────────── */
 export default function App() {
@@ -88,6 +89,12 @@ export default function App() {
             <Stack.Screen name="OrderStatus" component={OrderStatusScreen} />
             <Stack.Screen name="TrackOrders"   component={TrackOrdersScreen} />
             <Stack.Screen name="Rewards" component={RewardsScreen} />
+
+            {/* Admin screens*/}
+            <Stack.Screen name="AdminHome" component={AdminHomeScreen} />
+
+            {/* Business screens */}
+            <Stack.Screen name="BusinessHome" component={BusinessHomeScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </CartProvider>

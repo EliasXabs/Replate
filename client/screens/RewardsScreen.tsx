@@ -66,7 +66,12 @@ export default function RewardsScreen({ navigation }: { navigation: Nav }) {
       <ScrollView contentContainerStyle={{ paddingBottom: 90 }}>
         {/* top icons row */}
         <View style={styles.headerRow}>
-          <FontAwesome name="user-circle-o" size={28} color={GREEN} />
+        <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => navigation.navigate('Account')}   // 👈 target screen
+        >
+        <FontAwesome name="user-circle-o" size={28} color={GREEN} />
+        </TouchableOpacity>
           <View style={{ flexDirection: 'row', gap: 24 }}>
             <MaterialIcons name="mark-email-unread" size={26} color={GREEN} />
             <MaterialIcons name="notifications-none" size={26} color={GREEN} />

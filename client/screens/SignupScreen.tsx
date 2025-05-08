@@ -80,7 +80,7 @@ export default function SignupScreen({ navigation }: { navigation: NavigationPro
           style={styles.picker}
         >
           <Picker.Item label="Customer" value="customer" />
-          <Picker.Item label="Restaurant Owner" value="restaurant" />
+          <Picker.Item label="Restaurant Owner" value="business" />
         </Picker>
 
         <TouchableOpacity style={styles.button} onPress={handleSignup}>

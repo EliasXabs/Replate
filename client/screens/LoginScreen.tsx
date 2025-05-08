@@ -3,14 +3,9 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { View, TextInput, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { RootStackParamList } from '../App';
 
-type AuthStackParamList = {
-  Login: undefined;
-  Signup: undefined;
-  Home: undefined;
-};
-
-type NavigationProp = StackNavigationProp<AuthStackParamList>;
+type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 export default function LoginScreen({ navigation }: { navigation: NavigationProp }) {
   const [email, setEmail] = useState('');
@@ -23,18 +18,36 @@ export default function LoginScreen({ navigation }: { navigation: NavigationProp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
+  
       const data = await res.json();
-      if (res.ok) {
-        await AsyncStorage.setItem('authToken', data.token);
-        navigation.navigate('Home');
-      } else {
-        alert(data.message || 'Invalid credentials');
+  
+      if (!res.ok) {
+        alert(data.error || data.message || 'Invalid credentials');
+        return;
+      }
+  
+      await AsyncStorage.multiSet([
+        ['authToken', data.token],
+        ['userRole',  data.role],   // backend now returns { …, role }
+      ]);
+  
+      /* 2️⃣  route by role */
+      switch (data.role) {
+        case 'business':
+          navigation.replace('BusinessHome');
+          break;
+        case 'admin':
+          navigation.replace('AdminHome');
+          break;
+        default: // 'customer' or anything else
+          navigation.replace('Home');
       }
     } catch (err) {
-      console.error(err);
+      console.error('Login error:', err);
       alert('Error during login');
     }
   };
+  
 
   return (
     <View style={styles.container}>

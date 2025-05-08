@@ -35,25 +35,30 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
-    
-    // Find the user by email
+
+    /* 1. Find user */
     const user = await User.findOne({ where: { email } });
     if (!user) {
       res.status(400).json({ error: 'Invalid email or password' });
       return;
     }
-    
-    // Compare provided password with the hashed password
+
+    /* 2. Verify password */
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
       res.status(400).json({ error: 'Invalid email or password' });
       return;
     }
-    
-    // Generate a JWT token using generateJWT (convert user.id to string)
+
+    /* 3. Generate token (keeping role inside the JWT for auth middleware) */
     const token = generateJWT(String(user.id), { role: user.role });
-    
-    res.status(200).json({ message: 'Logged in successfully', token });
+
+    /* 4. Send role in the response body too  */
+    res.status(200).json({
+      message: 'Logged in successfully',
+      token,
+      role: user.role,
+    });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Server error during login' });
