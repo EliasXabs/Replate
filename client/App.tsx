@@ -20,6 +20,7 @@ import CartScreen           from './screens/CartScreen';
 import CheckoutScreen       from './screens/CheckoutScreen';
 import OrderStatusScreen    from './screens/OrderStatusScreen';
 import TrackOrdersScreen    from './screens/TrackOrdersScreen';
+import NewOnReplateScreen   from './screens/NewOnReplateScreen';
 
 /* ── stack param list ─────────────────────────────────────────────────── */
 export type RootStackParamList = {
@@ -33,6 +34,7 @@ export type RootStackParamList = {
   Location: undefined;
   Checkout: undefined;
   Cart: undefined;
+  TrackOrder: undefined;
   TrackOrders: undefined;
   Notifications: undefined;
   OrderConfirmation: undefined;
