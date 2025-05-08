@@ -21,7 +21,7 @@ const GREEN = '#2E8B57';
 const BEIGE = '#fdf8ef';
 
 export default function CartScreen({ navigation }: { navigation: NavigationProp }) {
-  const { items, addOrInc, dec, total, clear } = useCart();
+  const { items, addOrInc, dec, total, clearCart } = useCart();
 
   const renderItem = ({ item }: any) => (
     <View style={styles.row}>
@@ -75,7 +75,7 @@ export default function CartScreen({ navigation }: { navigation: NavigationProp 
             <Text style={styles.totalNum}>{total.toFixed(2)} $</Text>
           </View>
 
-          <TouchableOpacity style={styles.checkoutBtn} onPress={() => {}}>
+          <TouchableOpacity style={styles.checkoutBtn} onPress={() => navigation.navigate('Checkout')}>
             <Text style={styles.checkoutText}>Go to checkout</Text>
           </TouchableOpacity>
         </>

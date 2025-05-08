@@ -17,6 +17,9 @@ import RestaurantListScreen from './screens/RestaurantListScreen';
 import FoodListingScreen    from './screens/FoodListingScreen';
 import FoodDetailScreen     from './screens/FoodDetailScreen';
 import CartScreen           from './screens/CartScreen';
+import CheckoutScreen       from './screens/CheckoutScreen';
+import OrderStatusScreen    from './screens/OrderStatusScreen';
+import TrackOrdersScreen    from './screens/TrackOrdersScreen';
 
 /* ── stack param list ─────────────────────────────────────────────────── */
 export type RootStackParamList = {
@@ -28,9 +31,11 @@ export type RootStackParamList = {
   Account: undefined;
   NewOnReplate: undefined;
   Location: undefined;
+  Checkout: undefined;
   Cart: undefined;
-  TrackOrder: undefined;
+  TrackOrders: undefined;
   Notifications: undefined;
+  OrderConfirmation: undefined;
 
   /* pages with params */
   ComboDetails:          { id: string };
@@ -38,6 +43,7 @@ export type RootStackParamList = {
   RestaurantList:        { category?: string };
   FoodListing:           { id: string };
   FoodDetail:            { id: string };
+  OrderStatus: { id: string };
 
   /* search */
   Search: undefined;
@@ -75,6 +81,9 @@ export default function App() {
             <Stack.Screen name="FoodListing"    component={FoodListingScreen} />
             <Stack.Screen name="FoodDetail"     component={FoodDetailScreen} />
             <Stack.Screen name="Cart"           component={CartScreen} />
+            <Stack.Screen name="Checkout"       component={CheckoutScreen} />
+            <Stack.Screen name="OrderStatus" component={OrderStatusScreen} />
+            <Stack.Screen name="TrackOrders"   component={TrackOrdersScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </CartProvider>

@@ -1,269 +1,95 @@
-import React, { useRef, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   View,
+  ScrollView,
   Text,
   StyleSheet,
   TouchableOpacity,
   Image,
-  ScrollView,
   Dimensions,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
 } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect } from 'react';
+import { StackNavigationProp } from '@react-navigation/stack';
 
-import BottomNavBar from '../components/BottomNavBar';           // shared bottom bar
-import type { RootStackParamList } from '../App';               // 👈 shared nav type
-import { Platform } from 'react-native';
-/* -------------------------------------------------------------------------- */
-/*                               Navigation                                   */
-/* -------------------------------------------------------------------------- */
+import BottomNavBar from '../components/BottomNavBar';
+import type { RootStackParamList } from '../App';
+
 type NavigationProp = StackNavigationProp<RootStackParamList>;
-
-/* -------------------------------------------------------------------------- */
-/*                               Constants                                    */
-/* -------------------------------------------------------------------------- */
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const HERO_HEIGHT   = 250;
+const NAV_BAR_HEIGHT = 60;
 const SLIDER_HEIGHT = 180;
 
-const GREEN = '#2E8B57';
-const BEIGE = '#fdf8ef';
-const NAV_BAR_HEIGHT = 60;
-
-/* -------------------------------------------------------------------------- */
-/*                               Slider helpers                               */
-/* -------------------------------------------------------------------------- */
-interface SliderItem {
-  id: string;
-  image: any;
-  target: keyof RootStackParamList;
-  params?: Record<string, any>;
-}
-interface ImageSliderProps {
-  data: SliderItem[];
-  navigation: NavigationProp;
-  imageHeight: number;
-}
-const ImageSlider: React.FC<ImageSliderProps> = ({
-  data,
-  navigation,
-  imageHeight,
-}) => {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) =>
-    setActiveIdx(Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH));
-
-  return (
-    <>
-      <ScrollView
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        directionalLockEnabled
-      >
-        {data.map(item => (
-          <TouchableOpacity
-            key={item.id}
-            activeOpacity={0.8}
-            onPress={() => navigation.navigate(item.target, item.params as any)}
-          >
-            <Image source={item.image} style={{ width: SCREEN_WIDTH, height: imageHeight }} />
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      <View style={styles.dotsRow}>
-        {data.map((_, idx) => (
-          <View
-            key={idx}
-            style={[
-              styles.dot,
-              { backgroundColor: idx === activeIdx ? '#006400' : '#d3d3d3' },
-            ]}
-          />
-        ))}
-      </View>
-    </>
-  );
+const COLORS = {
+  green: '#2E8B57',
+  beige: '#fdf8ef',
+  orange: '#ff8c00',
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                 Home screen                                */
-/* -------------------------------------------------------------------------- */
 export default function HomeScreen({ navigation }: { navigation: NavigationProp }) {
   const [points, setPoints] = useState(0);
-
   const [recommended, setRecommended] = useState<
     { id: number; name: string; images: string[] }[]
   >([]);
 
-  /* dummy slider data ---------------------------------------------------- */
-  const recs: SliderItem[] = [
-    { id: 'r1', image: require('../assets/reco_placeholder1.png'), target: 'RecommendationDetails', params: { id: 'r1' } },
-    { id: 'r2', image: require('../assets/reco_placeholder2.png'), target: 'RecommendationDetails', params: { id: 'r2' } },
-  ];
+  // Debug state
+  const [viewHeight, setViewHeight] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+  const scrollable = contentHeight > viewHeight;
 
   useEffect(() => {
-    const fetchPoints = async () => {
-      try {
-        const token = await AsyncStorage.getItem('authToken');
-        if (!token) return;
-  
-        const res = await fetch('http://localhost:5000/api/points', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-  
-        const data = await res.json();
-  
-        if (res.ok && typeof data.points === 'number') {
-          setPoints(data.points);
-        } else {
-          console.warn('Failed to fetch points:', data);
-        }
-      } catch (error) {
-        console.error('Error fetching points:', error);
-      }
-    };
-  
-    fetchPoints();
+    (async () => {
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) return;
 
-    const fetchRecommendations = async () => {
       try {
-        const token = await AsyncStorage.getItem('authToken');
-        if (!token) return;
-  
-        const res = await fetch('http://localhost:5000/api/restaurants', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        // Fetch points
+        const pRes = await fetch('http://localhost:5000/api/points', {
+          headers: { Authorization: `Bearer ${token}` },
         });
-  
-        const { restaurants } = await res.json();
-  
-        const detailedRestaurants = await Promise.all(
-          restaurants.map(async (rest: any) => {
-            const menuRes = await fetch(`http://localhost:5000/api/menu/${rest.id}`);
-            const menuItems = await menuRes.json();
-  
+        const pJson = await pRes.json();
+        if (pRes.ok && typeof pJson.points === 'number') {
+          setPoints(pJson.points);
+        }
+
+        // Fetch recommended restaurants
+        const rRes = await fetch('http://localhost:5000/api/restaurants', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const { restaurants } = await rRes.json();
+        const details = await Promise.all(
+          restaurants.map(async (r: any) => {
+            const mRes = await fetch(`http://localhost:5000/api/menu/${r.id}`);
+            const items = await mRes.json();
             return {
-              id: rest.id,
-              name: rest.business_name,
-              images: menuItems.map((item: any) => item.image_url).filter(Boolean),
+              id: r.id,
+              name: r.business_name,
+              images: items.map((i: any) => i.image_url).filter(Boolean),
             };
           })
         );
-  
-      setRecommended(detailedRestaurants); // or shuffle for more variety
-      } catch (error) {
-        console.error('Failed to fetch recommendations:', error);
+        setRecommended(details);
+      } catch (err) {
+        console.warn(err);
       }
-    };
-
-    fetchRecommendations();
+    })();
   }, []);
 
-  /* render --------------------------------------------------------------- */
   return (
-    <View style={styles.safe}>
-      {Platform.OS === 'web' ? (
-        /* Web: use View with overflowY */
-        <View style={styles.webScroll}>
-          {/* header */}
-          <View style={styles.headerRow}>
-            <TouchableOpacity onPress={() => navigation.navigate('Account')}>
-              <FontAwesome name="user-circle-o" size={28} color="#006400" />
-            </TouchableOpacity>
-            <View style={styles.pointsWrapper}>
-              <View style={styles.pointsCircle}>
-                <Text style={styles.pointsText}>{points}</Text>
-                <Text style={styles.brandText}>RePlate</Text>
-              </View>
-            </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Search')}>
-              <FontAwesome name="search" size={28} color="#006400" />
-            </TouchableOpacity>
-          </View>
-
-          {/* CTA */}
-          <TouchableOpacity
-            style={styles.newBtn}
-            activeOpacity={0.9}
-            onPress={() => navigation.navigate('NewOnReplate')}
-          >
-            <Text style={styles.newBtnText}>New on replate</Text>
-            <Ionicons name="arrow-forward" size={24} color="#fff" />
-          </TouchableOpacity>
-
-          {/* Section Header */}
-          <SectionHeader
-            title="Just for YOU!"
-            onShowAll={() =>
-              navigation.navigate('RestaurantList', { category: 'Recommended' })
-            }
-          />
-
-          {/* Recommendation cards */}
-          {recommended.map((rest) => (
-            <View key={rest.id} style={{ marginBottom: 32 }}>
-              <ScrollView
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingRight: 16 }}
-                style={{
-                  width: SCREEN_WIDTH - 32,
-                  alignSelf: 'center',
-                }}
-              >
-                {rest.images.map((img, idx) => (
-                  <Image
-                    key={idx}
-                    source={{ uri: img }}
-                    style={{
-                      width: SCREEN_WIDTH - 48,
-                      height: SLIDER_HEIGHT,
-                      borderRadius: 10,
-                      marginRight: 12,
-                    }}
-                  />
-                ))}
-              </ScrollView>
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: '600',
-                  marginTop: 8,
-                  marginLeft: 4,
-                }}
-              >
-                {rest.name}
-              </Text>
-            </View>
-          ))}
-        </View>
-      ) : (
-        /* Native: use ScrollView */
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.main}>
         <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{
-            ...styles.scrollContent,
-            paddingBottom: 120,
-          }}
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator
+          onLayout={e => setViewHeight(e.nativeEvent.layout.height)}
+          onContentSizeChange={(_w, h) => setContentHeight(h)}
         >
-          {/* header */}
+          {/* HEADER */}
           <View style={styles.headerRow}>
             <TouchableOpacity onPress={() => navigation.navigate('Account')}>
-              <FontAwesome name="user-circle-o" size={28} color="#006400" />
+              <FontAwesome name="user-circle-o" size={28} color={COLORS.green} />
             </TouchableOpacity>
             <View style={styles.pointsWrapper}>
               <View style={styles.pointsCircle}>
@@ -272,132 +98,192 @@ export default function HomeScreen({ navigation }: { navigation: NavigationProp 
               </View>
             </View>
             <TouchableOpacity onPress={() => navigation.navigate('Search')}>
-              <FontAwesome name="search" size={28} color="#006400" />
+              <FontAwesome name="search" size={28} color={COLORS.green} />
             </TouchableOpacity>
           </View>
 
-          {/* CTA */}
+          {/* CTA BUTTON */}
           <TouchableOpacity
             style={styles.newBtn}
             activeOpacity={0.9}
             onPress={() => navigation.navigate('NewOnReplate')}
           >
-            <Text style={styles.newBtnText}>New on replate</Text>
+            <Text style={styles.newBtnText}>New on RePlate</Text>
             <Ionicons name="arrow-forward" size={24} color="#fff" />
           </TouchableOpacity>
 
-          {/* Section Header */}
-          <SectionHeader
-            title="Just for YOU!"
-            onShowAll={() =>
-              navigation.navigate('RestaurantList', { category: 'Recommended' })
-            }
-          />
+          {/* SECTION TITLE */}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Just for YOU!</Text>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate('RestaurantList', { category: 'Recommended' })
+              }
+            >
+              <Text style={styles.showAll}>Show All</Text>
+            </TouchableOpacity>
+          </View>
 
-          {/* Recommendation cards */}
-          {recommended.map((rest) => (
-            <View key={rest.id} style={{ marginBottom: 32 }}>
+          {/* RECOMMENDATIONS */}
+          {recommended.map(rest => (
+            <View key={rest.id} style={styles.recCard}>
               <ScrollView
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingRight: 16 }}
-                style={{
-                  width: SCREEN_WIDTH - 32,
-                  alignSelf: 'center',
-                }}
+                contentContainerStyle={styles.recScrollContent}
               >
-                {rest.images.map((img, idx) => (
-                  <Image
-                    key={idx}
-                    source={{ uri: img }}
-                    style={{
-                      width: SCREEN_WIDTH - 48,
-                      height: SLIDER_HEIGHT,
-                      borderRadius: 10,
-                      marginRight: 12,
-                    }}
-                  />
+                {rest.images.map((uri, idx) => (
+                  <Image key={idx} source={{ uri }} style={styles.recImage} />
                 ))}
               </ScrollView>
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: '600',
-                  marginTop: 8,
-                  marginLeft: 4,
-                }}
-              >
-                {rest.name}
-              </Text>
+              <Text style={styles.restaurantName}>{rest.name}</Text>
             </View>
           ))}
         </ScrollView>
+      </View>
+
+      {/* OVERLAYED NAV BAR */}
+      <View style={styles.navOverlay} pointerEvents="box-none">
+        <View style={styles.navWrapper}>
+          <BottomNavBar navigation={navigation} />
+        </View>
+      </View>
+
+      {/* DEBUG BADGE */}
+      {__DEV__ && (
+        <View style={styles.debugBadge}>
+          <Text style={styles.debugText}>
+            {scrollable ? 'Scrollable ✅' : 'Not scrollable ❌'}
+          </Text>
+        </View>
       )}
-
-      {/* persistent bottom bar */}
-      <BottomNavBar navigation={navigation} />
-    </View>
+    </SafeAreaView>
   );
-
-
-  
-
-  
-  
 }
 
-/* -------------------------------------------------------------------------- */
-/*                          Helper components                                 */
-/* -------------------------------------------------------------------------- */
-const SectionHeader = ({
-  title,
-  onShowAll,
-}: {
-  title: string;
-  onShowAll: () => void;
-}) => (
-  <View style={styles.sectionHeader}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <TouchableOpacity onPress={onShowAll}>
-      <Text style={styles.showAll}>Show All</Text>
-    </TouchableOpacity>
-  </View>
-);
-
-/* -------------------------------------------------------------------------- */
-/*                                   Styles                                   */
-/* -------------------------------------------------------------------------- */
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: BEIGE,
+    position: 'relative',
+    backgroundColor: COLORS.beige,
   },
-  webScroll: {
+  main: {
     flex: 1,
-    height: '100%',         // ensure full-screen on web
-    overflow: 'scroll',      // let browser handle vertical scroll
-    paddingHorizontal: 16,
-    paddingBottom: NAV_BAR_HEIGHT + 40,
+  },
+  scroll: {
+    flex: 1,
+    overflow: 'scroll',
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: NAV_BAR_HEIGHT + 40,
+    paddingTop: 8,
+    paddingBottom: NAV_BAR_HEIGHT + 16,
   },
-
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
-  pointsWrapper: { alignItems: 'center', flex: 1 },
-  pointsCircle: { borderWidth: 2, borderColor: GREEN, borderRadius: 100, width: 140, height: 140, justifyContent: 'center', alignItems: 'center' },
-  pointsText: { fontSize: 32, fontWeight: '700', color: '#ff8c00' },
-  brandText: { fontSize: 20, color: GREEN, fontStyle: 'italic' },
-
-  newBtn: { backgroundColor: GREEN, borderRadius: 18, paddingVertical: 20, paddingHorizontal: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 },
-  newBtnText: { color: '#fff', fontSize: 18, fontWeight: '600' },
-
-  dotsRow: { flexDirection: 'row', justifyContent: 'center', marginVertical: 6 },
-  dot: { width: 8, height: 8, borderRadius: 4, marginHorizontal: 4 },
-
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 20, marginBottom: 6 },
-  sectionTitle: { fontSize: 22, fontWeight: '700', color: '#000' },
-  showAll: { color: '#007bff', fontSize: 14 },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  pointsWrapper: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  pointsCircle: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 2,
+    borderColor: COLORS.green,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pointsText: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: COLORS.orange,
+  },
+  brandText: {
+    fontSize: 20,
+    color: COLORS.green,
+    fontStyle: 'italic',
+  },
+  newBtn: {
+    backgroundColor: COLORS.green,
+    borderRadius: 18,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  newBtnText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  showAll: {
+    fontSize: 14,
+    color: '#007bff',
+  },
+  recCard: {
+    marginBottom: 32,
+  },
+  recScrollContent: {
+    paddingRight: 16,
+  },
+  recImage: {
+    width: SCREEN_WIDTH - 48,
+    height: SLIDER_HEIGHT,
+    borderRadius: 10,
+    marginRight: 12,
+  },
+  restaurantName: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 8,
+    marginLeft: 4,
+  },
+  navOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: NAV_BAR_HEIGHT,
+    backgroundColor: COLORS.beige,
+    borderTopWidth: 1,
+    borderColor: '#ddd',
+    zIndex: 1000,
+    elevation: 10,
+    overflow: 'hidden',
+  },
+  navWrapper: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  debugBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  debugText: {
+    color: '#fff',
+    fontSize: 12,
+  },
 });

@@ -8,13 +8,15 @@ export interface CartItem {
   price: number;
   image: any;
   qty: number;
+  description?: string;
 }
+
 
 interface CartCtx {
   items: CartItem[];
   addOrInc: (item: Omit<CartItem, 'qty'>) => void;
   dec: (id: string) => void;
-  clear: () => void;
+  clearCart: () => void;
   total: number;
 }
 
@@ -40,12 +42,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         .filter(i => i.qty > 0),
     );
 
-  const clear = () => setItems([]);
+  const clearCart = () => setItems([]);
 
   const total = items.reduce((sum, i) => sum + i.qty * i.price, 0);
 
   return (
-    <CartContext.Provider value={{ items, addOrInc, dec, clear, total }}>
+    <CartContext.Provider value={{ items, addOrInc, dec, clearCart, total }}>
       {children}
     </CartContext.Provider>
   );

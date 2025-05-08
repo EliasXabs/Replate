@@ -175,7 +175,7 @@ export default function FoodListingScreen({
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 90 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* header */}
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -198,11 +198,7 @@ export default function FoodListingScreen({
         </View>
   
         {/* category chips */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.chipBar}
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipBar}>
           {data.categories.map((cat) => (
             <TouchableOpacity
               key={cat}
@@ -225,9 +221,24 @@ export default function FoodListingScreen({
         />
       </ScrollView>
   
+      {/* View Cart button */}
+      {items.length > 0 && (
+        <TouchableOpacity
+          style={styles.cartButton}
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('Cart')}
+        >
+          <Text style={styles.cartButtonText}>
+            View Cart ({items.reduce((total, item) => total + item.qty, 0)})
+          </Text>
+        </TouchableOpacity>
+      )}
+
+  
       <BottomNavBar navigation={navigation} />
     </SafeAreaView>
   );
+  
   
 }
 
@@ -292,6 +303,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#444',
     marginBottom: 4,
+  },
+  cartButton: {
+    position: 'absolute',
+    bottom: 80,
+    left: 16,
+    right: 16,
+    backgroundColor: GREEN,
+    borderRadius: 24,
+    paddingVertical: 14,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
+  },
+  cartButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
   },
   
 });
