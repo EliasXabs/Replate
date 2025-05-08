@@ -21,6 +21,7 @@ import CheckoutScreen       from './screens/CheckoutScreen';
 import OrderStatusScreen    from './screens/OrderStatusScreen';
 import TrackOrdersScreen    from './screens/TrackOrdersScreen';
 import NewOnReplateScreen from './screens/NewOnReplateScreen';
+import RewardsScreen from './screens/RewardsScreen';
 
 /* ── stack param list ─────────────────────────────────────────────────── */
 export type RootStackParamList = {
@@ -38,6 +39,7 @@ export type RootStackParamList = {
   TrackOrders: undefined;
   Notifications: undefined;
   OrderConfirmation: undefined;
+  Rewards: undefined;
 
   /* pages with params */
   ComboDetails:          { id: string };
@@ -85,6 +87,7 @@ export default function App() {
             <Stack.Screen name="Checkout"       component={CheckoutScreen} />
             <Stack.Screen name="OrderStatus" component={OrderStatusScreen} />
             <Stack.Screen name="TrackOrders"   component={TrackOrdersScreen} />
+            <Stack.Screen name="Rewards" component={RewardsScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </CartProvider>
