@@ -20,7 +20,7 @@ import CartScreen           from './screens/CartScreen';
 import CheckoutScreen       from './screens/CheckoutScreen';
 import OrderStatusScreen    from './screens/OrderStatusScreen';
 import TrackOrdersScreen    from './screens/TrackOrdersScreen';
-import NewOnReplateScreen   from './screens/NewOnReplateScreen';
+import NewOnReplateScreen from './screens/NewOnReplateScreen';
 
 /* ── stack param list ─────────────────────────────────────────────────── */
 export type RootStackParamList = {
@@ -58,7 +58,6 @@ const Placeholder = (label: string) => () =>
   <SafeAreaView><Text style={{ padding: 20 }}>{label}</Text></SafeAreaView>;
 
 const AccountScreen      = Placeholder('Account screen');
-const NewOnReplateScreen = Placeholder('New on Replate');
 
 /* ── app component ────────────────────────────────────────────────────── */
 export default function App() {
