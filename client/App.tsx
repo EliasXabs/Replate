@@ -25,6 +25,7 @@ import RewardsScreen from './screens/RewardsScreen';
 import AccountScreen from './screens/AccountScreen';
 import AdminHomeScreen from './screens/AdminHomeScreen';
 import BusinessHomeScreen from './screens/BusinessHomeScreen';
+import ChatScreen from './screens/ChatScreen';
 
 /* ── stack param list ─────────────────────────────────────────────────── */
 export type RootStackParamList = {
@@ -46,6 +47,7 @@ export type RootStackParamList = {
   AccountScreen: undefined;
   AdminHome: undefined;
   BusinessHome: undefined;
+  Chat : undefined;
 
   /* pages with params */
   ComboDetails:          { id: string };
@@ -89,6 +91,7 @@ export default function App() {
             <Stack.Screen name="OrderStatus" component={OrderStatusScreen} />
             <Stack.Screen name="TrackOrders"   component={TrackOrdersScreen} />
             <Stack.Screen name="Rewards" component={RewardsScreen} />
+            <Stack.Screen name="Chat" component={ChatScreen} />
 
             {/* Admin screens*/}
             <Stack.Screen name="AdminHome" component={AdminHomeScreen} />

@@ -25,7 +25,7 @@ const BottomNavBar: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.navBar}>
-      <NavIcon icon={<Entypo   name="location-pin" size={24} color="#fff" />} to="Location"     />
+      <NavIcon icon={<Entypo   name="chat" size={24} color="#fff" />} to="Chat"     />
       <NavIcon icon={<FontAwesome name="shopping-bag" size={24} color="#fff" />} to="Cart"         />
       <NavIcon icon={<FontAwesome name="home"        size={24} color="#fff" />} to="Home"         />
       <NavIcon icon={<FontAwesome name="list"        size={24} color="#fff" />} to="TrackOrders"   />
