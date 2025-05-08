@@ -3,7 +3,6 @@
 /* -------------------------------------------------------------------------- */
 import React, { useEffect, useState } from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -11,42 +10,44 @@ import {
   Image,
   ScrollView,
   FlatList,
+  SafeAreaView,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { FontAwesome, Entypo } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import BottomNavBar from '../components/BottomNavBar';
-import { useCart }  from '../context/CartContext';
+import { useCart } from '../context/CartContext';
 import type { RootStackParamList } from '../App';
 
 /* ---------- nav helpers ---------- */
 type NavigationProp = StackNavigationProp<RootStackParamList, 'FoodListing'>;
-type RouteProp      = { params: { id: string } };
+type RouteProp = { params: { id: string } };
 
+/* ---------- data models ---------- */
 interface Dish {
   id: string;
   name: string;
   description: string;
   price: number;
-  image: any;
+  image: { uri: string };
 }
 
 interface Restaurant {
   id: string;
   name: string;
-  cuisine: string;
-  eta: string;
+  address?: string;
+  phone?: string;
   categories: string[];
   dishes: Dish[];
 }
 
 /* ---------- constants ---------- */
-const GREEN   = '#2E8B57';
-const BEIGE   = '#fdf8ef';
+const GREEN = '#2E8B57';
+const BEIGE = '#fdf8ef';
 const CHIP_BG = '#c4f1c4';
 const IMAGE_SIZE = 80;
 
-/* -------------------------------------------------------------------------- */
 export default function FoodListingScreen({
   navigation,
   route,
@@ -54,39 +55,61 @@ export default function FoodListingScreen({
   navigation: NavigationProp;
   route: RouteProp;
 }) {
-  const { addOrInc, dec, items } = useCart();           // 🛒 shared cart
+  const { addOrInc, dec, items } = useCart();
   const { id } = route.params;
-  const [data, setData]     = useState<Restaurant | null>(null);
+
+  const [data, setData] = useState<Restaurant | null>(null);
   const [activeCat, setCat] = useState<string>('All');
 
-  /* stub fetch ----------------------------------------------------------- */
   useEffect(() => {
-    (async () => {
-      await new Promise(r => setTimeout(r, 200));
-      setData({
-        id,
-        name: 'Pasta Villa',
-        cuisine: 'Italian',
-        eta: '30‑40 min',
-        categories: ['All', 'Starters', 'Salads', 'Desserts'],
-        dishes: [
+    const loadRestaurant = async () => {
+      try {
+        const token = await AsyncStorage.getItem('authToken');
+        if (!token) return;
+  
+        const restRes = await fetch(
+          `http://localhost:5000/api/restaurants/${id}`,
           {
-            id: 'dish1',
-            name: 'Spaghetti Bolognese',
-            description: 'Tomato sauce, ground beef',
-            price: 12.2,
-            image: require('../assets/pasta.jpg'),
-          },
-          {
-            id: 'dish2',
-            name: 'Bruschetta Trio',
-            description: 'Tomato, basil, garlic',
-            price: 6.5,
-            image: require('../assets/pasta.jpg'),
-          },
-        ],
-      });
-    })();
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const restJson = await restRes.json();
+        const restaurant = restJson.restaurant;
+        
+        const name = restaurant.business_name;
+        const address = restaurant.address;
+        const phone = restaurant.phone_number;
+        
+  
+        const menuRes = await fetch(`http://localhost:5000/api/menu/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const menuJson = await menuRes.json();
+  
+        const dishes: Dish[] = (menuJson as any[]).map((item) => ({
+          id: item.id.toString(),
+          name: item.name,
+          description: item.description,
+          price: parseFloat(item.price),
+          image: { uri: item.image_url },
+        }));
+  
+        const categories = ['All', ...new Set(dishes.map((d) => d.name))];
+  
+        setData({
+          id,
+          name,
+          address,
+          phone,
+          categories,
+          dishes,
+        });
+      } catch (err) {
+        console.error('Failed to load restaurant:', err);
+      }
+    };
+  
+    loadRestaurant();
   }, [id]);
 
   if (!data) {
@@ -97,20 +120,18 @@ export default function FoodListingScreen({
     );
   }
 
+  // filter dishes by active category (simple name match, since no explicit category field)
   const dishes =
     activeCat === 'All'
       ? data.dishes
-      : data.dishes.filter(d =>
-          d.name.toLowerCase().includes(activeCat.toLowerCase()),
+      : data.dishes.filter((d) =>
+          d.name.toLowerCase().includes(activeCat.toLowerCase())
         );
 
-  /* ---------- render dish row ---------- */
   const renderDish = ({ item }: { item: Dish }) => {
-    const qty = items.find(i => i.id === item.id)?.qty ?? 0;
-
+    const qty = items.find((i) => i.id === item.id)?.qty ?? 0;
     return (
       <View style={styles.dishCard}>
-        {/* tappable area */}
         <TouchableOpacity
           style={{ flexDirection: 'row', flex: 1 }}
           activeOpacity={0.85}
@@ -122,11 +143,10 @@ export default function FoodListingScreen({
             <Text style={styles.dishDesc} numberOfLines={2}>
               {item.description}
             </Text>
-            <Text style={styles.dishPrice}>{item.price.toFixed(2)} $</Text>
+            <Text style={styles.dishPrice}>{item.price.toFixed(2)} $</Text>
           </View>
         </TouchableOpacity>
 
-        {/* qty buttons */}
         <View style={styles.qtyCol}>
           <TouchableOpacity onPress={() => dec(item.id)}>
             <FontAwesome name="minus" size={18} color="#000" />
@@ -153,7 +173,6 @@ export default function FoodListingScreen({
     );
   };
 
-  /* ------------------------------------------------------------------ */
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 90 }}>
@@ -162,24 +181,29 @@ export default function FoodListingScreen({
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Entypo name="chevron-left" size={28} color={GREEN} />
           </TouchableOpacity>
-
           <Text style={styles.title}>{data.name}</Text>
-
           <TouchableOpacity onPress={() => navigation.navigate('Search')}>
             <FontAwesome name="search" size={24} color={GREEN} />
           </TouchableOpacity>
         </View>
-
-        {/* tags */}
-        <View style={styles.tagRow}>
-          <Text style={styles.tagText}>{data.cuisine}</Text>
-          <Text style={styles.dot}>·</Text>
-          <Text style={styles.tagText}>{data.eta}</Text>
+  
+        {/* restaurant details */}
+        <View style={styles.detailsContainer}>
+          {data.address && (
+            <Text style={styles.detailsText}>📍 {data.address}</Text>
+          )}
+          {data.phone && (
+            <Text style={styles.detailsText}>📞 {data.phone}</Text>
+          )}
         </View>
-
+  
         {/* category chips */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipBar}>
-          {data.categories.map(cat => (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.chipBar}
+        >
+          {data.categories.map((cat) => (
             <TouchableOpacity
               key={cat}
               style={[styles.chip, activeCat === cat && styles.chipActive]}
@@ -189,21 +213,22 @@ export default function FoodListingScreen({
             </TouchableOpacity>
           ))}
         </ScrollView>
-
-        {/* dish list */}
+  
+        {/* dishes list */}
         <FlatList
           data={dishes}
-          keyExtractor={d => d.id}
+          keyExtractor={(d) => d.id}
           renderItem={renderDish}
           scrollEnabled={false}
           ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
           contentContainerStyle={{ paddingBottom: 14 }}
         />
       </ScrollView>
-
+  
       <BottomNavBar navigation={navigation} />
     </SafeAreaView>
   );
+  
 }
 
 /* -------------------------------------------------------------------------- */
@@ -211,7 +236,6 @@ export default function FoodListingScreen({
 /* -------------------------------------------------------------------------- */
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BEIGE },
-
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -220,10 +244,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   title: { fontSize: 24, fontStyle: 'italic', fontWeight: '700' },
-
-  tagRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 6 },
-  tagText: { fontSize: 14, color: '#333' },
-  dot: { marginHorizontal: 6, fontSize: 14 },
 
   chipBar: { paddingHorizontal: 16, marginBottom: 12 },
   chip: {
@@ -264,4 +284,14 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   qtyText: { fontWeight: '700' },
+  detailsContainer: {
+    paddingHorizontal: 16,
+    marginVertical: 8,
+  },
+  detailsText: {
+    fontSize: 14,
+    color: '#444',
+    marginBottom: 4,
+  },
+  
 });
